@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldCheck, LogOut, User, Settings } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ShieldCheck, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback} from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +14,16 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
-export function DashboardNavbar() {
+interface DashboardNavbarProps {
+  user?: {
+    email: string;
+  } | null;
+}
+
+export function DashboardNavbar({ user: initialUser }: DashboardNavbarProps) {
   const { data: session } = authClient.useSession();
   const router = useRouter();
+  const user = session?.user || initialUser;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -38,7 +45,7 @@ export function DashboardNavbar() {
             <DropdownMenuTrigger asChild>
               <Avatar className="h-8 w-8 cursor-pointer transition-opacity hover:opacity-80">
                 <AvatarFallback>
-                  {session?.user?.email?.charAt(0).toUpperCase() || "U"}
+                  {user?.email?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
@@ -46,7 +53,7 @@ export function DashboardNavbar() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {session?.user?.email}
+                    {user?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>

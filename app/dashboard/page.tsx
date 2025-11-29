@@ -33,7 +33,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <DashboardNavbar />
+      <DashboardNavbar user={user} />
 
       <main className="container max-w-4xl mx-auto py-10 px-4">
         <div className="mb-8 space-y-2">
@@ -71,7 +71,10 @@ export default async function DashboardPage() {
           </Card>
 
           {/* Security Card (2FA) */}
-          <TwoFactorSwitch className="h-full" />
+          <TwoFactorSwitch
+            className="h-full"
+            twoFactorEnabled={(user as any).twoFactorEnabled}
+          />
 
           {/* Session Manager - Full Width on Mobile, Span 2 cols if needed or just one */}
           <div className="md:col-span-2">

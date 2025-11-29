@@ -20,8 +20,17 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { cn } from "@/lib/utils";
 
-export function TwoFactorSwitch() {
+interface TwoFactorSwitchProps {
+  className?: string;
+  twoFactorEnabled?: boolean;
+}
+
+export function TwoFactorSwitch({
+  className,
+  twoFactorEnabled: initialTwoFactorEnabled,
+}: TwoFactorSwitchProps) {
   const { data: session } = authClient.useSession();
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -30,7 +39,8 @@ export function TwoFactorSwitch() {
   const [verificationCode, setVerificationCode] = useState("");
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
-  const is2FAEnabled = session?.user?.twoFactorEnabled;
+  const is2FAEnabled =
+    session?.user?.twoFactorEnabled ?? initialTwoFactorEnabled ?? false;
 
   const handleEnable = async () => {
     if (!password) {
@@ -46,14 +56,14 @@ export function TwoFactorSwitch() {
         setTotpURI(res.data.totpURI);
         setBackupCodes(res.data.backupCodes || []);
         toast.success("2FA initiated. Please scan the QR code.");
-            } else if (res.error) {
-                 toast.error(res.error.message)
-            }
-        } catch {
-            toast.error("Failed to enable 2FA")
-        } finally {
-            setIsPending(false)
-        }
+      } else if (res.error) {
+        toast.error(res.error.message);
+      }
+    } catch {
+      toast.error("Failed to enable 2FA");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleVerify = async () => {
@@ -67,14 +77,14 @@ export function TwoFactorSwitch() {
         toast.success("2FA Enabled Successfully");
         setTotpURI(null);
         setPassword("");
-            } else if (res.error) {
-                toast.error(res.error.message)
-            }
-        } catch {
-             toast.error("Verification failed")
-        } finally {
-            setIsPending(false)
-        }
+      } else if (res.error) {
+        toast.error(res.error.message);
+      }
+    } catch {
+      toast.error("Verification failed");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleDisable = async () => {
@@ -91,19 +101,24 @@ export function TwoFactorSwitch() {
         toast.success("2FA Disabled");
         setShowDisableConfirm(false);
         setPassword("");
-            } else if (res.error) {
-                toast.error(res.error.message)
-            }
-        } catch {
-            toast.error("Failed to disable 2FA")
-        } finally {
-            setIsPending(false)
-        }
+      } else if (res.error) {
+        toast.error(res.error.message);
+      }
+    } catch {
+      toast.error("Failed to disable 2FA");
+    } finally {
+      setIsPending(false);
+    }
   };
 
   if (is2FAEnabled) {
     return (
-      <Card className="w-full max-w-2xl border-green-200 dark:border-green-900">
+      <Card
+        className={cn(
+          "w-full border-green-200 dark:border-green-900",
+          className
+        )}
+      >
         <CardHeader>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-green-600" />
@@ -156,7 +171,7 @@ export function TwoFactorSwitch() {
   }
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className={cn("w-full", className)}>
       <CardHeader>
         <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
         <CardDescription>
