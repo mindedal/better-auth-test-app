@@ -14,6 +14,20 @@ import {
 } from "@/components/ui/card";
 import { User, Mail, Shield } from "lucide-react";
 
+// Define an interface to match the user object from the session,
+// including properties added by plugins like twoFactorEnabled.
+interface AuthenticatedUser {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  email: string;
+  emailVerified: boolean;
+  // name is not used, so we don't include it in this specific type for user,
+  // but it might be present in the underlying better-auth Session type.
+  // image is not used.
+  twoFactorEnabled?: boolean; // Optional as it might not always be enabled or present
+}
+
 export default async function DashboardPage() {
   const [session, activeSessionsData] = await Promise.all([
     auth.api.getSession({
@@ -29,7 +43,7 @@ export default async function DashboardPage() {
   }
 
   const activeSessions: Session[] = (activeSessionsData || []) as Session[];
-  const user = session.user;
+  const user = session.user as AuthenticatedUser;
 
   return (
     <div className="min-h-screen bg-muted/20">
