@@ -64,9 +64,13 @@ export default function LoginPage() {
             toast.message("Signing in...");
           },
           onSuccess: async (ctx) => {
-            const data = ctx.data as { twoFactor?: boolean; twoFactorRedirect?: boolean; user?: object; session?: object };
+            const data = ctx.data as {
+              twoFactor?: boolean;
+              twoFactorRedirect?: boolean;
+              user?: object;
+              session?: object;
+            };
 
-            // Correct check for 2FA flag in the response
             if (data?.twoFactor || data?.twoFactorRedirect) {
               setIsTwoFactor(true);
               toast.message("Two-Factor Authentication required");
@@ -74,14 +78,12 @@ export default function LoginPage() {
               return;
             }
 
-            // Standard success case - User object present
             if (data?.user || data?.session) {
               toast.success("Signed in successfully!");
               window.location.href = "/dashboard";
               return;
             }
 
-            // Fallback: If data is empty (e.g. {}), verify session explicitly
             try {
               const sessionData = await authClient.getSession();
 

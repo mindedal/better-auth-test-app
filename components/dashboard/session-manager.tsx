@@ -4,10 +4,10 @@ import { authClient } from "@/lib/auth-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Laptop, Smartphone, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-interface Session {
+export interface Session {
   id: string;
   userAgent?: string | null;
   ipAddress?: string | null;
@@ -15,42 +15,17 @@ interface Session {
   token: string;
 }
 
-export function SessionManager() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isPending, setIsPending] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { data: currentSession } = authClient.useSession();
+interface SessionManagerProps {
+  initialSessions: Session[];
+  currentSessionToken: string;
+}
+
+export function SessionManager({
+  initialSessions,
+  currentSessionToken,
+}: SessionManagerProps) {
+  const [sessions, setSessions] = useState<Session[]>(initialSessions);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-
-            useEffect(() => {
-        async function fetchSessions() {
-            try {
-                const res = await authClient.listSessions()
-                if (res.data) {
-                    setSessions(res.data as unknown as Session[])
-                } else if (res.error) {
-                    setError(res.error.message || "Failed to fetch sessions")
-                }
-            } catch {
-                setError("Failed to fetch sessions")
-            } finally {
-                setIsPending(false)
-            }
-        }
-        fetchSessions()
-    }, [])
-
-  if (isPending) {
-    return (
-      <div className="flex items-center gap-2">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading sessions...
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500">Failed to load sessions</div>;
-  }
 
   return (
     <Card className="w-full max-w-2xl">
@@ -59,12 +34,12 @@ export function SessionManager() {
       </CardHeader>
       <CardContent className="space-y-4">
         {sessions.map((session) => {
-          const isCurrent = currentSession?.session?.token === session.token;
+          const isCurrent = currentSessionToken === session.token;
           const isMobile = session.userAgent?.toLowerCase().includes("mobile");
 
           return (
             <div
-              key={session.id}
+              key={session.id || session.token}
               className="flex items-center justify-between p-4 border rounded-lg"
             >
               <div className="flex items-center gap-4">
@@ -89,7 +64,7 @@ export function SessionManager() {
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Last active:{" "}
-                    {new Date(session.expiresAt).toLocaleDateString()}
+                    {new Date(session.expiresAt).toISOString().split("T")[0]}
                   </div>
                 </div>
               </div>
@@ -102,16 +77,18 @@ export function SessionManager() {
                   onClick={async () => {
                     setRevokingId(session.token);
                     try {
-                                            await authClient.revokeSession({
-                                                token: session.token
-                                            })
-                                            setSessions(prev => prev.filter(s => s.token !== session.token))
-                                            toast.success("Session revoked")
-                                        } catch {
-                                            toast.error("Failed to revoke session")
-                                        } finally {
-                                            setRevokingId(null)
-                                        }
+                      await authClient.revokeSession({
+                        token: session.token,
+                      });
+                      setSessions((prev) =>
+                        prev.filter((s) => s.token !== session.token)
+                      );
+                      toast.success("Session revoked");
+                    } catch {
+                      toast.error("Failed to revoke session");
+                    } finally {
+                      setRevokingId(null);
+                    }
                   }}
                 >
                   {revokingId === session.token ? (
