@@ -15,20 +15,24 @@ export interface Session {
   token: string;
 }
 
+import { cn } from "@/lib/utils";
+
 interface SessionManagerProps {
   initialSessions: Session[];
   currentSessionToken: string;
+  className?: string;
 }
 
 export function SessionManager({
   initialSessions,
   currentSessionToken,
+  className,
 }: SessionManagerProps) {
   const [sessions, setSessions] = useState<Session[]>(initialSessions);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className={cn("w-full", className)}>
       <CardHeader>
         <CardTitle>Active Sessions</CardTitle>
       </CardHeader>

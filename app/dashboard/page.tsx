@@ -87,7 +87,7 @@ export default async function DashboardPage() {
           {/* Security Card (2FA) */}
           <TwoFactorSwitch
             className="h-full"
-            twoFactorEnabled={(user as any).twoFactorEnabled}
+            twoFactorEnabled={user.twoFactorEnabled}
           />
 
           {/* Session Manager - Full Width on Mobile, Span 2 cols if needed or just one */}

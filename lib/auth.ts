@@ -1,13 +1,107 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, type Adapter } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { twoFactor } from "better-auth/plugins";
 import { redis } from "./redis";
 
+const adapterFactory = prismaAdapter(prisma, {
+  provider: "postgresql",
+});
+
+interface Where {
+  field: string;
+  value: unknown;
+  operator?: string;
+  connector?: "AND" | "OR";
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JoinOption = any; 
+
+const adapter = (...args: unknown[]) => {
+  const adapterInstance = (adapterFactory as unknown as (...args: unknown[]) => Adapter)(...args);
+
+  const stripName = (data: Record<string, unknown>) => {
+    if (data && "name" in data) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { name, ...rest } = data;
+      return rest;
+    }
+    return data;
+  };
+
+  const polyfillName = (user: Record<string, unknown>) => {
+    if (user && !user.name) {
+      user.name = (user.email as string | undefined)?.split("@")[0] || "User";
+    }
+    return user;
+  };
+
+  const originalCreate = adapterInstance.create;
+  adapterInstance.create = async <T extends Record<string, unknown>, R = T>(params: { model: string; data: T; select?: string[]; forceAllowId?: boolean }) => {
+    if (params.model === "user" || params.model === "User") {
+      params.data = stripName(params.data as Record<string, unknown>) as T;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await originalCreate(params as any);
+    if (params.model === "user" || params.model === "User") {
+      return polyfillName(result as Record<string, unknown>) as unknown as R;
+    }
+    return result as R;
+  };
+
+  const originalUpdate = adapterInstance.update;
+  adapterInstance.update = async <T>(params: { model: string; where: Where[]; update: Record<string, unknown> }) => {
+    if (params.model === "user" || params.model === "User") {
+      params.update = stripName(params.update);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await originalUpdate(params as any);
+    if (params.model === "user" || params.model === "User") {
+      return polyfillName(result as Record<string, unknown>) as unknown as T;
+    }
+    return result as T;
+  };
+
+  const originalFindOne = adapterInstance.findOne;
+  adapterInstance.findOne = async <T>(params: { model: string; where: Where[]; select?: string[]; join?: JoinOption }) => {
+    if (
+      (params.model === "user" || params.model === "User") &&
+      params.select &&
+      Array.isArray(params.select)
+    ) {
+      params.select = params.select.filter((f: string) => f !== "name");
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await originalFindOne(params as any);
+    if ((params.model === "user" || params.model === "User") && result) {
+      return polyfillName(result as Record<string, unknown>) as unknown as T;
+    }
+    return result as T;
+  };
+
+  const originalFindMany = adapterInstance.findMany;
+  adapterInstance.findMany = async <T>(params: { model: string; where?: Where[]; select?: string[]; limit?: number; offset?: number; sortBy?: { field: string; direction: "desc" | "asc" }; join?: JoinOption }) => {
+    if (
+      (params.model === "user" || params.model === "User") &&
+      params.select &&
+      Array.isArray(params.select)
+    ) {
+      params.select = params.select.filter((f: string) => f !== "name");
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await originalFindMany(params as any);
+    if ((params.model === "user" || params.model === "User") && result) {
+      return (result as Record<string, unknown>[]).map(polyfillName) as unknown as T[];
+    }
+    return result as T[];
+  };
+
+  return adapterInstance;
+};
+
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
-  }),
+  database: adapter,
   secondaryStorage: {
     get: async (key) => {
       const value = await redis.get(key);

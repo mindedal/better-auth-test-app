@@ -28,7 +28,7 @@ export default function Home() {
         <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
           <div className="container max-w-5xl mx-auto flex flex-col items-center gap-4 text-center px-4">
             <Link
-              href="https://github.com/better-auth/better-auth"
+              href="https://github.com/mindedal/better-auth-test-app"
               className="rounded-2xl bg-muted px-4 py-1.5 text-sm font-medium transition-colors hover:text-primary"
               target="_blank"
             >
@@ -38,7 +38,8 @@ export default function Home() {
               Authentication Testbed
             </h1>
             <p className="max-w-2xl leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-              Demonstrating secure auth with PostgreSQL, Redis, and cookie-based sessions for Next.js applications.
+              Demonstrating secure auth with PostgreSQL, Redis, and cookie-based
+              sessions for Next.js applications.
             </p>
             <div className="space-x-4">
               <Link href="/login">
@@ -46,10 +47,13 @@ export default function Home() {
                   View Auth Flow
                 </Button>
               </Link>
-              <Link href="https://github.com" target="_blank">
+              <Link
+                href="https://github.com/better-auth/better-auth"
+                target="_blank"
+              >
                 <Button variant="outline" size="lg" className="h-11 px-8 gap-2">
                   <Github className="h-4 w-4" />
-                  GitHub
+                  Better Auth
                 </Button>
               </Link>
             </div>
@@ -66,7 +70,8 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Test and observe various authentication flows, including login, logout, and session management.
+                  Test and observe various authentication flows, including
+                  login, logout, and session management.
                 </p>
               </CardContent>
             </Card>
@@ -77,7 +82,8 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Seamless integration with PostgreSQL for robust user and session data storage.
+                  Seamless integration with PostgreSQL for robust user and
+                  session data storage.
                 </p>
               </CardContent>
             </Card>
@@ -100,7 +106,8 @@ export default function Home() {
       <footer className="py-6 md:px-8 md:py-0">
         <div className="container max-w-5xl mx-auto flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row px-4">
           <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-            This is a technical demonstration, not a production service. Built using Next.js and shadcn/ui.
+            This is a technical demonstration, not a production service. Built
+            using Next.js and shadcn/ui.
           </p>
         </div>
       </footer>
