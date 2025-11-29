@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isTwoFactor, setIsTwoFactor] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [trustDevice, setTrustDevice] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
 
@@ -48,6 +49,8 @@ export default function LoginPage() {
             user?: object;
             session?: object;
           };
+
+          console.log("Sign In Response:", ctx);
 
           if (data?.twoFactor || data?.twoFactorRedirect) {
             setIsTwoFactor(true);
@@ -115,7 +118,7 @@ export default function LoginPage() {
     try {
       const res = await authClient.twoFactor.verifyTotp({
         code: otpCode,
-        trustDevice: true,
+        trustDevice,
       });
 
       if (res.data) {
@@ -158,6 +161,16 @@ export default function LoginPage() {
                   <InputOTPSlot index={5} />
                 </InputOTPGroup>
               </InputOTP>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="trust-device"
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  checked={trustDevice}
+                  onChange={(e) => setTrustDevice(e.target.checked)}
+                />
+                <Label htmlFor="trust-device">Trust this device</Label>
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">

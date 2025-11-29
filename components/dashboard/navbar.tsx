@@ -42,7 +42,7 @@ export function DashboardNavbar({ user: initialUser }: DashboardNavbarProps) {
 
         <div className="flex items-center gap-2">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild id="user-profile-menu">
               <Avatar className="h-8 w-8 cursor-pointer transition-opacity hover:opacity-80">
                 <AvatarFallback>
                   {user?.email?.charAt(0).toUpperCase() || "U"}
