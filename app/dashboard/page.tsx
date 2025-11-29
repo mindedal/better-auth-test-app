@@ -4,6 +4,15 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { Session } from "@/components/dashboard/session-manager";
+import { DashboardNavbar } from "@/components/dashboard/navbar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { User, Mail, Shield } from "lucide-react";
 
 export default async function DashboardPage() {
   const [session, activeSessionsData] = await Promise.all([
@@ -20,23 +29,60 @@ export default async function DashboardPage() {
   }
 
   const activeSessions: Session[] = (activeSessionsData || []) as Session[];
+  const user = session.user;
 
   return (
-    <div className="p-10 space-y-8">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <div className="grid gap-8 md:grid-cols-2">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Security</h2>
-          <TwoFactorSwitch />
+    <div className="min-h-screen bg-muted/20">
+      <DashboardNavbar />
+
+      <main className="container max-w-4xl mx-auto py-10 px-4">
+        <div className="mb-8 space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and security preferences.
+          </p>
         </div>
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Sessions</h2>
-          <SessionManager
-            initialSessions={activeSessions}
-            currentSessionToken={session.session.token}
-          />
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Profile Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                Profile Information
+              </CardTitle>
+              <CardDescription>Your personal account details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-none text-muted-foreground">
+                  Email Address
+                </p>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-sm font-medium">{user.email}</p>
+                </div>
+              </div>
+              <div className="pt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                <Shield className="h-3.5 w-3.5" />
+                <span>Account ID: {user.id}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Security Card (2FA) */}
+          <TwoFactorSwitch className="h-full" />
+
+          {/* Session Manager - Full Width on Mobile, Span 2 cols if needed or just one */}
+          <div className="md:col-span-2">
+            <SessionManager
+              initialSessions={activeSessions}
+              currentSessionToken={session.session.token}
+              className="h-full"
+            />
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
