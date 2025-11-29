@@ -1,4 +1,5 @@
-import { betterAuth, type Adapter } from "better-auth";
+import { betterAuth } from "better-auth";
+import type { DBAdapter } from "better-auth/types";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { twoFactor } from "better-auth/plugins";
@@ -16,10 +17,13 @@ interface Where {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type JoinOption = any; 
+type JoinOption = any;
 
 const adapter = (...args: unknown[]) => {
-  const adapterInstance = (adapterFactory as unknown as (...args: unknown[]) => Adapter)(...args);
+
+  const adapterInstance = (adapterFactory as unknown as (...args: unknown[]) => DBAdapter)(...args);
+
+
 
   const stripName = (data: Record<string, unknown>) => {
     if (data && "name" in data) {
