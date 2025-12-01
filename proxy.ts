@@ -56,7 +56,10 @@ export async function proxy(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  if (isAuthRoute && sessionCookie) {
+  // Don't redirect to dashboard if coming from a failed auth check (prevents infinite redirect loop
+  // when session cookie exists but is invalid/expired - dashboard validates and redirects back with this param)
+  const fromAuthFailure = request.nextUrl.searchParams.get("auth") === "failed";
+  if (isAuthRoute && sessionCookie && !fromAuthFailure) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

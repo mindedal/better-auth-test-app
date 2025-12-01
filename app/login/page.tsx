@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,12 @@ import {
 import { Loader2, ShieldCheck, CheckCircle2, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
+
+// Email validation schema
+const emailSchema = z
+  .string()
+  .min(1, "Email is required")
+  .email("Please enter a valid email address");
 
 // Password validation schema with strength requirements
 const passwordSchema = z
@@ -81,6 +88,8 @@ function PasswordStrengthIndicator({ password }: { password: string }) {
 }
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isTwoFactor, setIsTwoFactor] = useState(false);
@@ -89,7 +98,25 @@ export default function LoginPage() {
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
+  // Show session expired message if redirected from dashboard with invalid session
+  useEffect(() => {
+    if (searchParams.get("auth") === "failed") {
+      toast.error("Session expired. Please sign in again.");
+      // Clean up the URL without triggering a navigation
+      router.replace("/login", { scroll: false });
+    }
+  }, [searchParams, router]);
+
   const handleSignIn = async () => {
+    // Validate email format before submitting
+    const emailValidation = emailSchema.safeParse(email);
+    if (!emailValidation.success) {
+      emailValidation.error.issues.forEach((issue) =>
+        toast.error(issue.message)
+      );
+      return;
+    }
+
     setIsPending(true);
     await authClient.signIn.email(
       {
@@ -147,6 +174,15 @@ export default function LoginPage() {
   };
 
   const handleSignUp = async () => {
+    // Validate email format before submitting
+    const emailValidation = emailSchema.safeParse(email);
+    if (!emailValidation.success) {
+      emailValidation.error.issues.forEach((issue) =>
+        toast.error(issue.message)
+      );
+      return;
+    }
+
     // Validate password strength before submitting
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
