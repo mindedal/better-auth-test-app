@@ -1,8 +1,10 @@
+import "server-only";
 import { betterAuth } from "better-auth";
 import type { DBAdapter } from "better-auth/types";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { twoFactor } from "better-auth/plugins";
+import { nextCookies } from "better-auth/next-js";
 import { redis } from "./redis";
 
 const adapterFactory = prismaAdapter(prisma, {
@@ -105,6 +107,7 @@ const adapter = (...args: unknown[]) => {
 };
 
 export const auth = betterAuth({
+  appName: "Better Auth Test App",
   database: adapter,
   secondaryStorage: {
     get: async (key) => {
@@ -124,6 +127,25 @@ export const auth = betterAuth({
     window: 60,
     max: 100,
     storage: "secondary-storage",
+    customRules: {
+      // Stricter rate limits for sensitive authentication endpoints
+      "/sign-in/email": {
+        window: 60,
+        max: 5, // 5 attempts per minute
+      },
+      "/sign-up/email": {
+        window: 60,
+        max: 3, // 3 attempts per minute
+      },
+      "/two-factor/*": {
+        window: 60,
+        max: 5, // 5 2FA attempts per minute
+      },
+      "/forget-password": {
+        window: 300, // 5 minutes
+        max: 3,
+      },
+    },
   },
   session: {
     expiresIn: 86400, // 24 hours absolute max TTL
@@ -132,8 +154,33 @@ export const auth = betterAuth({
       maxAge: 1800, // 30 minutes sliding TTL
     },
   },
+  advanced: {
+    // Use secure cookies in production
+    useSecureCookies: process.env.NODE_ENV === "production",
+  },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url, token }) => {
+      // TODO: Implement email sending with your preferred email provider
+      // Example with console log for development:
+      console.log(`[Email Verification] Send to: ${user.email}`);
+      console.log(`[Email Verification] Verification URL: ${url}`);
+      console.log(`[Email Verification] Token: ${token}`);
+
+      // Example implementation with a mail service:
+      // await sendEmail({
+      //   to: user.email,
+      //   subject: 'Verify your email address',
+      //   html: `<p>Click <a href="${url}">here</a> to verify your email address.</p>`,
+      // });
+    },
   },
   user: {
     additionalFields: {
@@ -146,5 +193,6 @@ export const auth = betterAuth({
   },
   plugins: [
     twoFactor(),
+    nextCookies(), // Must be the last plugin for Next.js Server Actions cookie handling
   ],
 });

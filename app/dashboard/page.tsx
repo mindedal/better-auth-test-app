@@ -39,7 +39,9 @@ export default async function DashboardPage() {
   ]);
 
   if (!session) {
-    redirect("/login");
+    // Include auth=failed param to prevent infinite redirect loop in middleware
+    // (middleware checks cookie presence optimistically, this signals the session was actually invalid)
+    redirect("/login?auth=failed");
   }
 
   const activeSessions: Session[] = (activeSessionsData || []) as Session[];
