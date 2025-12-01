@@ -13,14 +13,72 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, CheckCircle2, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { z } from "zod";
+
+// Password validation schema with strength requirements
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(128, "Password must be less than 128 characters")
+  .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+  .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+  .regex(/[0-9]/, "Password must contain at least one number")
+  .regex(
+    /[^a-zA-Z0-9]/,
+    "Password must contain at least one special character"
+  );
+
+function validatePassword(password: string): {
+  valid: boolean;
+  errors: string[];
+} {
+  const result = passwordSchema.safeParse(password);
+  if (result.success) {
+    return { valid: true, errors: [] };
+  }
+  return {
+    valid: false,
+    errors: result.error.issues.map((issue) => issue.message),
+  };
+}
+
+// Password strength indicator component
+function PasswordStrengthIndicator({ password }: { password: string }) {
+  const checks = [
+    { label: "8+ characters", valid: password.length >= 8 },
+    { label: "Lowercase letter", valid: /[a-z]/.test(password) },
+    { label: "Uppercase letter", valid: /[A-Z]/.test(password) },
+    { label: "Number", valid: /[0-9]/.test(password) },
+    { label: "Special character", valid: /[^a-zA-Z0-9]/.test(password) },
+  ];
+
+  if (!password) return null;
+
+  return (
+    <div className="mt-2 space-y-1">
+      {checks.map((check) => (
+        <div
+          key={check.label}
+          className={`flex items-center gap-2 text-xs ${
+            check.valid ? "text-green-600" : "text-muted-foreground"
+          }`}
+        >
+          <CheckCircle2
+            className={`h-3 w-3 ${check.valid ? "opacity-100" : "opacity-30"}`}
+          />
+          {check.label}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -28,8 +86,8 @@ export default function LoginPage() {
   const [isTwoFactor, setIsTwoFactor] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [trustDevice, setTrustDevice] = useState(false);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const router = useRouter();
 
   const handleSignIn = async () => {
     setIsPending(true);
@@ -89,6 +147,13 @@ export default function LoginPage() {
   };
 
   const handleSignUp = async () => {
+    // Validate password strength before submitting
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      passwordValidation.errors.forEach((error) => toast.error(error));
+      return;
+    }
+
     setIsPending(true);
     await authClient.signUp.email(
       {
@@ -101,8 +166,11 @@ export default function LoginPage() {
           toast.message("Signing up...");
         },
         onSuccess: () => {
-          toast.success("Signed up successfully!");
-          router.push("/dashboard");
+          toast.success(
+            "Account created! Please check your email to verify your account."
+          );
+          setShowVerificationMessage(true);
+          setIsPending(false);
         },
         onError: (ctx) => {
           toast.error(ctx.error.message);
@@ -133,6 +201,40 @@ export default function LoginPage() {
       setIsPending(false);
     }
   };
+
+  // Show email verification message after signup
+  if (showVerificationMessage) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-muted/50 p-4">
+        <Card className="w-full max-w-md shadow-lg border-border/50">
+          <CardHeader className="items-center text-center space-y-2">
+            <div className="h-12 w-12 rounded-xl bg-green-100 dark:bg-green-900/20 flex items-center justify-center text-green-600 mb-2">
+              <Mail className="h-6 w-6" />
+            </div>
+            <CardTitle className="text-2xl">Check Your Email</CardTitle>
+            <CardDescription>
+              We&apos;ve sent a verification link to <strong>{email}</strong>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Click the link in the email to verify your account. If you
+              don&apos;t see it, check your spam folder.
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowVerificationMessage(false)}
+            >
+              Back to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   if (isTwoFactor) {
     return (
@@ -266,6 +368,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
+                  <PasswordStrengthIndicator password={password} />
                 </div>
                 <Button
                   className="w-full mt-2"

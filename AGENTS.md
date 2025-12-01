@@ -42,7 +42,7 @@ Use web search for:
 
 ---
 
-## 📚 Tech Stack Overview
+## Tech Stack Overview
 
 | Category      | Technology            | Version        |
 | ------------- | --------------------- | -------------- |
